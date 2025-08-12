@@ -2,41 +2,60 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* BPO Call Center Dashboard Design System */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Professional BPO Dashboard Colors */
+    --background: 220 27% 8%;
+    --foreground: 220 15% 95%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 220 25% 10%;
+    --card-foreground: 220 15% 95%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 220 25% 10%;
+    --popover-foreground: 220 15% 95%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 195 100% 50%;
+    --primary-foreground: 220 27% 8%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 220 20% 15%;
+    --secondary-foreground: 220 15% 85%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 20% 12%;
+    --muted-foreground: 220 10% 60%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 195 100% 40%;
+    --accent-foreground: 220 15% 95%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 85% 55%;
+    --destructive-foreground: 220 15% 95%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --success: 142 76% 36%;
+    --success-foreground: 220 15% 95%;
 
-    --radius: 0.5rem;
+    --warning: 48 96% 53%;
+    --warning-foreground: 220 27% 8%;
+
+    --border: 220 20% 18%;
+    --input: 220 20% 15%;
+    --ring: 195 100% 50%;
+
+    --radius: 0.75rem;
+
+    /* Professional Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(195 100% 50%), hsl(195 100% 40%));
+    --gradient-danger: linear-gradient(135deg, hsl(0 85% 55%), hsl(0 85% 45%));
+    --gradient-success: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 30%));
+    --gradient-warning: linear-gradient(135deg, hsl(48 96% 53%), hsl(48 96% 45%));
+
+    /* Enterprise Shadows */
+    --shadow-elevated: 0 10px 25px -5px hsl(220 27% 4% / 0.3);
+    --shadow-glow: 0 0 30px hsl(195 100% 50% / 0.2);
+
+    /* Animation Timing */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.15s ease;
 
     --sidebar-background: 0 0% 98%;
 
