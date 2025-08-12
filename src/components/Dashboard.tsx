@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
 import { 
   Phone, 
   Clock, 
@@ -23,9 +22,7 @@ import {
   RefreshCw,
   Upload,
   BarChart3,
-  Activity,
-  Trash2,
-  Send
+  Activity
 } from "lucide-react";
 
 interface CallData {
@@ -52,7 +49,6 @@ interface DashboardMetrics {
 }
 
 const Dashboard = () => {
-  const { toast } = useToast();
   const [callQueue, setCallQueue] = useState<CallData[]>([]);
   const [metrics, setMetrics] = useState<DashboardMetrics>({
     total_calls: 0,
@@ -72,8 +68,6 @@ const Dashboard = () => {
   });
   const [aiTriageQuery, setAiTriageQuery] = useState("");
   const [triageResponse, setTriageResponse] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [callFile, setCallFile] = useState<File | null>(null);
 
   // Simulate real-time data
   useEffect(() => {
@@ -146,298 +140,41 @@ const Dashboard = () => {
     });
 
   const handlePredictSingle = () => {
-    if (!singleCallForm.customer_name || !singleCallForm.issue_type) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in customer name and issue type",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsLoading(true);
+    const probability = Math.random() * 0.8 + 0.1;
+    const newCall: CallData = {
+      call_id: `CALL-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+      customer_name: singleCallForm.customer_name,
+      phone_number: singleCallForm.phone_number,
+      wait_time: parseInt(singleCallForm.wait_time) || 0,
+      issue_type: singleCallForm.issue_type,
+      probability: probability,
+      predicted_action: probability > 0.7 ? "Priority Routing" : probability > 0.4 ? "Offer Callback" : "Continue Queue",
+      priority: probability > 0.7 ? "High" : probability > 0.4 ? "Medium" : "Low",
+      status: "Waiting",
+      timestamp: new Date().toISOString()
+    };
     
-    // Simulate API call delay
-    setTimeout(() => {
-      const probability = Math.random() * 0.8 + 0.1;
-      const newCall: CallData = {
-        call_id: `CALL-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-        customer_name: singleCallForm.customer_name,
-        phone_number: singleCallForm.phone_number,
-        wait_time: parseInt(singleCallForm.wait_time) || 0,
-        issue_type: singleCallForm.issue_type,
-        probability: probability,
-        predicted_action: probability > 0.7 ? "Priority Routing" : probability > 0.4 ? "Offer Callback" : "Continue Queue",
-        priority: probability > 0.7 ? "High" : probability > 0.4 ? "Medium" : "Low",
-        status: "Waiting",
-        timestamp: new Date().toISOString()
-      };
-      
-      setCallQueue(prev => [newCall, ...prev]);
-      setSingleCallForm({ customer_name: "", issue_type: "", wait_time: "", phone_number: "" });
-      setIsLoading(false);
-      
-      toast({
-        title: "Risk Assessment Complete",
-        description: `Call ${newCall.call_id} added to queue with ${(probability * 100).toFixed(1)}% abandonment risk`,
-        variant: probability > 0.7 ? "destructive" : "default"
-      });
-    }, 1500);
+    setCallQueue(prev => [newCall, ...prev]);
+    setSingleCallForm({ customer_name: "", issue_type: "", wait_time: "", phone_number: "" });
   };
 
   const handleAiTriage = () => {
-    if (!aiTriageQuery.trim()) {
-      toast({
-        title: "Query Required",
-        description: "Please enter a customer query to process",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsLoading(true);
+    const responses = [
+      "This appears to be a billing inquiry. I can help you check your account balance and recent charges. Your current balance is $45.67 with a payment due on March 15th.",
+      "For delivery tracking, I can see your order #12345 is currently in transit and expected to arrive tomorrow by 3 PM. Would you like me to send you tracking updates?",
+      "This seems like a technical support issue. I've run a quick diagnostic and detected a connectivity issue. I'm escalating this to our technical team with priority status.",
+      "Account verification completed. I can help you reset your password and update your security settings. For advanced account changes, I'll connect you with a specialist."
+    ];
     
-    // Simulate AI processing delay
-    setTimeout(() => {
-      const responses = [
-        "This appears to be a billing inquiry. I can help you check your account balance and recent charges. Your current balance is $45.67 with a payment due on March 15th. I've also found a $10 credit from last month that can be applied. Would you like me to process the payment or escalate to billing specialist?",
-        "For delivery tracking, I can see your order #12345 is currently in transit and expected to arrive tomorrow by 3 PM. The package is with FedEx and tracking shows it's 2 stops away. I've sent you a tracking link via SMS. No escalation needed - issue resolved!",
-        "This seems like a technical support issue. I've run a quick diagnostic and detected a connectivity issue with your router model RT-AC66U. I'm sending troubleshooting steps via email, but this requires escalation to Level 2 technical support due to potential hardware failure.",
-        "Account verification completed successfully. I can help you reset your password and update your security settings. For advanced account changes like closing accounts or major profile updates, I'll connect you with a specialist. Standard changes processed automatically."
-      ];
-      
-      const response = responses[Math.floor(Math.random() * responses.length)];
-      setTriageResponse(response);
-      setIsLoading(false);
-      
-      toast({
-        title: "AI Triage Complete",
-        description: "Customer query processed and response generated",
-        variant: "default"
-      });
-    }, 2000);
+    setTriageResponse(responses[Math.floor(Math.random() * responses.length)]);
   };
 
   const handleTakeAction = (callId: string, action: string) => {
-    const call = callQueue.find(c => c.call_id === callId);
-    if (!call) return;
-
-    setCallQueue(prev => prev.map(c => 
-      c.call_id === callId 
-        ? { 
-            ...c, 
-            status: action === "callback" ? "Completed" : "In Progress", 
-            agent_assigned: action === "priority" ? `Agent #${Math.floor(Math.random() * 50 + 1)}` : undefined 
-          }
-        : c
+    setCallQueue(prev => prev.map(call => 
+      call.call_id === callId 
+        ? { ...call, status: action === "callback" ? "Completed" : "In Progress", agent_assigned: action === "priority" ? "Agent #" + Math.floor(Math.random() * 50 + 1) : undefined }
+        : call
     ));
-
-    const actionMessages = {
-      priority: `Call ${callId} moved to priority queue and assigned to ${call.agent_assigned || 'next available agent'}`,
-      callback: `Callback scheduled for ${call.customer_name}. Customer will be contacted within 15 minutes`,
-      bot: `${call.customer_name} transferred to AI assistant for immediate support`
-    };
-
-    toast({
-      title: "Action Completed",
-      description: actionMessages[action as keyof typeof actionMessages] || "Action processed successfully",
-      variant: "default"
-    });
-  };
-
-  // New handler functions for interactive buttons
-  const handleEmergencyCallback = () => {
-    const highRiskCalls = callQueue.filter(call => call.probability > 0.8);
-    if (highRiskCalls.length === 0) {
-      toast({
-        title: "No Emergency Cases",
-        description: "No calls currently require emergency intervention",
-        variant: "default"
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    setTimeout(() => {
-      setCallQueue(prev => prev.map(call => 
-        call.probability > 0.8 
-          ? { ...call, status: "In Progress", agent_assigned: `Emergency Agent #${Math.floor(Math.random() * 5 + 1)}` }
-          : call
-      ));
-      setIsLoading(false);
-      
-      toast({
-        title: "Emergency Protocol Activated",
-        description: `${highRiskCalls.length} high-risk calls moved to emergency callback queue`,
-        variant: "destructive"
-      });
-    }, 1000);
-  };
-
-  const handleDeployAI = () => {
-    toast({
-      title: "AI Assistant Deployed",
-      description: "Virtual assistant is now handling incoming calls for initial triage",
-      variant: "default"
-    });
-  };
-
-  const handleSendSMS = () => {
-    const eligibleCalls = callQueue.filter(call => call.wait_time > 180);
-    if (eligibleCalls.length === 0) {
-      toast({
-        title: "No Eligible Calls",
-        description: "No calls have been waiting long enough for SMS deflection",
-        variant: "default"
-      });
-      return;
-    }
-
-    toast({
-      title: "SMS Deflection Sent",
-      description: `${eligibleCalls.length} customers sent self-service SMS options`,
-      variant: "default"
-    });
-  };
-
-  const handleRefreshQueue = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      // Simulate adding 2-3 new calls
-      const newCalls = Array.from({ length: Math.floor(Math.random() * 3) + 1 }, () => {
-        const issues = ["Billing", "Technical Support", "Account", "Delivery", "Refund", "General Inquiry"];
-        const names = ["Alex Rodriguez", "Maria Garcia", "David Kim", "Lisa Thompson", "James Wilson"];
-        const probability = Math.random();
-        
-        return {
-          call_id: `CALL-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-          customer_name: names[Math.floor(Math.random() * names.length)],
-          phone_number: `+1${Math.floor(Math.random() * 9000000000) + 1000000000}`,
-          wait_time: Math.floor(Math.random() * 120) + 30,
-          issue_type: issues[Math.floor(Math.random() * issues.length)],
-          probability: probability,
-          predicted_action: probability > 0.7 ? "Priority Routing" : probability > 0.4 ? "Offer Callback" : "Continue Queue",
-          priority: (probability > 0.7 ? "High" : probability > 0.4 ? "Medium" : "Low") as "High" | "Medium" | "Low",
-          status: "Waiting" as const,
-          timestamp: new Date().toISOString()
-        };
-      });
-
-      setCallQueue(prev => [...newCalls, ...prev]);
-      setIsLoading(false);
-      
-      toast({
-        title: "Queue Refreshed",
-        description: `${newCalls.length} new calls added to queue`,
-        variant: "default"
-      });
-    }, 1000);
-  };
-
-  const handleClearQueue = () => {
-    setCallQueue([]);
-    toast({
-      title: "Queue Cleared",
-      description: "All calls have been removed from the queue",
-      variant: "default"
-    });
-  };
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setCallFile(file);
-      toast({
-        title: "File Selected",
-        description: `${file.name} ready for upload. Click "Send Batch to API" to process.`,
-        variant: "default"
-      });
-    }
-  };
-
-  const handleSendBatch = () => {
-    if (!callFile) {
-      toast({
-        title: "No File Selected",
-        description: "Please upload a CSV file first",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    setTimeout(() => {
-      // Simulate processing a batch file
-      const batchCalls = Array.from({ length: 8 }, (_, i) => {
-        const issues = ["Billing", "Technical Support", "Account", "Delivery", "Refund"];
-        const names = ["Batch Customer " + (i + 1)];
-        const probability = Math.random();
-        
-        return {
-          call_id: `BATCH-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-          customer_name: names[0],
-          phone_number: `+1${Math.floor(Math.random() * 9000000000) + 1000000000}`,
-          wait_time: Math.floor(Math.random() * 300) + 60,
-          issue_type: issues[Math.floor(Math.random() * issues.length)],
-          probability: probability,
-          predicted_action: probability > 0.7 ? "Priority Routing" : probability > 0.4 ? "Offer Callback" : "Continue Queue",
-          priority: (probability > 0.7 ? "High" : probability > 0.4 ? "Medium" : "Low") as "High" | "Medium" | "Low",
-          status: "Waiting" as const,
-          timestamp: new Date().toISOString()
-        };
-      });
-
-      setCallQueue(prev => [...batchCalls, ...prev]);
-      setCallFile(null);
-      setIsLoading(false);
-      
-      toast({
-        title: "Batch Processing Complete",
-        description: `${batchCalls.length} calls processed and added to queue`,
-        variant: "default"
-      });
-    }, 2500);
-  };
-
-  const handleLoadSample = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      const sampleCalls = Array.from({ length: 6 }, (_, i) => {
-        const sampleData = [
-          { name: "John Marketing", issue: "Campaign Analytics", phone: "+1-555-0101" },
-          { name: "Sarah Finance", issue: "Budget Approval", phone: "+1-555-0102" },
-          { name: "Mike Operations", issue: "System Integration", phone: "+1-555-0103" },
-          { name: "Emma Support", issue: "Client Escalation", phone: "+1-555-0104" },
-          { name: "Tom Development", issue: "API Documentation", phone: "+1-555-0105" },
-          { name: "Lisa Quality", issue: "Process Review", phone: "+1-555-0106" }
-        ];
-        
-        const data = sampleData[i] || sampleData[0];
-        const probability = Math.random();
-        
-        return {
-          call_id: `SAMPLE-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-          customer_name: data.name,
-          phone_number: data.phone,
-          wait_time: Math.floor(Math.random() * 400) + 100,
-          issue_type: data.issue,
-          probability: probability,
-          predicted_action: probability > 0.7 ? "Priority Routing" : probability > 0.4 ? "Offer Callback" : "Continue Queue",
-          priority: (probability > 0.7 ? "High" : probability > 0.4 ? "Medium" : "Low") as "High" | "Medium" | "Low",
-          status: "Waiting" as const,
-          timestamp: new Date().toISOString()
-        };
-      });
-
-      setCallQueue(prev => [...sampleCalls, ...prev]);
-      setIsLoading(false);
-      
-      toast({
-        title: "Sample Data Loaded",
-        description: `${sampleCalls.length} sample calls added to queue for testing`,
-        variant: "default"
-      });
-    }, 1500);
   };
 
   return (
@@ -482,81 +219,33 @@ const Dashboard = () => {
           <div>
             <h3 className="text-lg font-semibold mb-4">Queue Management</h3>
             <div className="space-y-3">
-              <label htmlFor="file-upload">
-                <Button className="w-full justify-start" variant="outline" asChild>
-                  <div>
-                    <Upload className="w-4 h-4 mr-2" />
-                    Upload Call Data
-                  </div>
-                </Button>
-              </label>
-              <input
-                id="file-upload"
-                type="file"
-                accept=".csv,.xlsx"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-              <Button 
-                className="w-full justify-start" 
-                variant="outline"
-                onClick={handleRefreshQueue}
-                disabled={isLoading}
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              <Button className="w-full justify-start" variant="outline">
+                <Upload className="w-4 h-4 mr-2" />
+                Upload Call Data
+              </Button>
+              <Button className="w-full justify-start" variant="outline">
+                <RefreshCw className="w-4 h-4 mr-2" />
                 Refresh Queue
               </Button>
-              <Button 
-                className="w-full justify-start" 
-                variant="outline"
-                onClick={handleLoadSample}
-                disabled={isLoading}
-              >
+              <Button className="w-full justify-start" variant="outline">
                 <BarChart3 className="w-4 h-4 mr-2" />
                 Load Sample Data
               </Button>
-              {callFile && (
-                <Button 
-                  className="w-full justify-start bg-gradient-primary" 
-                  onClick={handleSendBatch}
-                  disabled={isLoading}
-                >
-                  <Send className="w-4 h-4 mr-2" />
-                  Send Batch to API
-                </Button>
-              )}
             </div>
           </div>
 
           <div>
             <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
             <div className="space-y-2">
-              <Button 
-                size="sm" 
-                className="w-full justify-start"
-                onClick={handleEmergencyCallback}
-                disabled={isLoading}
-              >
+              <Button size="sm" className="w-full justify-start">
                 <PhoneCall className="w-4 h-4 mr-2" />
                 Emergency Callback
               </Button>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={handleDeployAI}
-                disabled={isLoading}
-              >
+              <Button size="sm" variant="outline" className="w-full justify-start">
                 <Bot className="w-4 h-4 mr-2" />
                 Deploy AI Assistant
               </Button>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={handleSendSMS}
-                disabled={isLoading}
-              >
+              <Button size="sm" variant="outline" className="w-full justify-start">
                 <MessageSquare className="w-4 h-4 mr-2" />
                 Send SMS Deflection
               </Button>
@@ -667,31 +356,11 @@ const Dashboard = () => {
 
             <TabsContent value="queue" className="space-y-4">
               <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
+                <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Activity className="w-5 h-5" />
                     Live Call Queue ({filteredCalls.length} calls)
                   </CardTitle>
-                  <div className="flex gap-2">
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      onClick={handleRefreshQueue}
-                      disabled={isLoading}
-                    >
-                      <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                      Refresh
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      onClick={handleClearQueue}
-                      disabled={callQueue.length === 0}
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Clear
-                    </Button>
-                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
@@ -717,28 +386,11 @@ const Dashboard = () => {
                             <p className="text-sm text-muted-foreground">{call.predicted_action}</p>
                           </div>
                           <div className="flex gap-2">
-                            <Button 
-                              size="sm" 
-                              onClick={() => handleTakeAction(call.call_id, "priority")}
-                              disabled={call.status !== "Waiting"}
-                            >
+                            <Button size="sm" onClick={() => handleTakeAction(call.call_id, "priority")}>
                               Priority
                             </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              onClick={() => handleTakeAction(call.call_id, "callback")}
-                              disabled={call.status !== "Waiting"}
-                            >
+                            <Button size="sm" variant="outline" onClick={() => handleTakeAction(call.call_id, "callback")}>
                               Callback
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              onClick={() => handleTakeAction(call.call_id, "bot")}
-                              disabled={call.status !== "Waiting"}
-                            >
-                              Bot
                             </Button>
                           </div>
                         </div>
@@ -777,12 +429,7 @@ const Dashboard = () => {
                         value={singleCallForm.wait_time}
                         onChange={(e) => setSingleCallForm(prev => ({ ...prev, wait_time: e.target.value }))}
                       />
-                      <Button 
-                        onClick={handlePredictSingle}
-                        disabled={isLoading}
-                      >
-                        {isLoading ? "Processing..." : "Predict"}
-                      </Button>
+                      <Button onClick={handlePredictSingle}>Predict</Button>
                     </div>
                   </div>
                 </CardContent>
@@ -805,31 +452,16 @@ const Dashboard = () => {
                       onChange={(e) => setAiTriageQuery(e.target.value)}
                       className="min-h-[100px]"
                     />
-                    <Button 
-                      onClick={handleAiTriage} 
-                      className="mt-2"
-                      disabled={isLoading || !aiTriageQuery.trim()}
-                    >
+                    <Button onClick={handleAiTriage} className="mt-2">
                       <Bot className="w-4 h-4 mr-2" />
-                      {isLoading ? "Processing..." : "Process with AI Triage"}
+                      Process with AI Triage
                     </Button>
                   </div>
                   
                   {triageResponse && (
-                    <div className="p-4 bg-muted rounded-lg border-l-4 border-l-primary">
-                      <h4 className="font-medium mb-2 flex items-center gap-2">
-                        <Bot className="w-4 h-4" />
-                        AI Response:
-                      </h4>
-                      <p className="text-sm leading-relaxed">{triageResponse}</p>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="mt-3"
-                        onClick={() => setTriageResponse("")}
-                      >
-                        Clear Response
-                      </Button>
+                    <div className="p-4 bg-muted rounded-lg">
+                      <h4 className="font-medium mb-2">AI Response:</h4>
+                      <p className="text-sm">{triageResponse}</p>
                     </div>
                   )}
 
