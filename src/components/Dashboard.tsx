@@ -75,22 +75,53 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [callFile, setCallFile] = useState<File | null>(null);
 
-  // Simulate real-time data
+  // Healthcare billing sample data from uploaded spreadsheet
+  const healthcareBillingData = [
+    { patientId: "154669", name: "John Martinez", dept: "Cardiology", diagnosis: "Hypertension", insurance: "MMIA", status: "Submitted", charge: 247 },
+    { patientId: "144776", name: "Sarah Johnson", dept: "Cardiology", diagnosis: "Hypertension", insurance: "M2MJ", status: "Approved", charge: 296 },
+    { patientId: "217503", name: "Mike Davis", dept: "Orthopedic", diagnosis: "Back Pain", insurance: "GMOC", status: "Denied", charge: 1240 },
+    { patientId: "174851", name: "Emily Chen", dept: "Pediatrics", diagnosis: "Asthma", insurance: "Self-pay", status: "Paid", charge: 43 },
+    { patientId: "193134", name: "Robert Wilson", dept: "Cardiology", diagnosis: "Heart Failure", insurance: "Gonzalez", status: "Approved", charge: 219 },
+    { patientId: "118420", name: "Jessica Brown", dept: "Neurology", diagnosis: "Stroke", insurance: "03W1", status: "Submitted", charge: 140 },
+    { patientId: "166646", name: "David Lee", dept: "Orthopedic", diagnosis: "Back Pain", insurance: "Self-pay", status: "Denied", charge: 141 },
+    { patientId: "175552", name: "Lisa Rodriguez", dept: "Neurology", diagnosis: "Epilepsy", insurance: "IUDTJ", status: "Approved", charge: 186 },
+    { patientId: "182683", name: "Tom Garcia", dept: "Cardiology", diagnosis: "Heart Failure", insurance: "2R01J", status: "Denied", charge: 231 },
+    { patientId: "116827", name: "Maria Lopez", dept: "Oncology", diagnosis: "Melanoma", insurance: "Self-pay", status: "Paid", charge: 1098 }
+  ];
+
+  // Simulate real-time data with healthcare billing context
   useEffect(() => {
     const generateMockCall = (): CallData => {
-      const issues = ["Billing", "Technical Support", "Account", "Delivery", "Refund", "General Inquiry"];
-      const names = ["John Smith", "Sarah Johnson", "Mike Davis", "Emily Chen", "Robert Wilson", "Jessica Brown"];
+      const billingIssues = [
+        "Insurance Claim Denial", 
+        "Bill Payment Query", 
+        "Coverage Verification", 
+        "Prior Authorization", 
+        "Copay Questions",
+        "Billing Statement Error",
+        "Insurance Network Query",
+        "Prescription Coverage",
+        "EOB Explanation",
+        "Payment Plan Setup"
+      ];
+      
+      const patientData = healthcareBillingData[Math.floor(Math.random() * healthcareBillingData.length)];
       const probability = Math.random();
       
+      // Higher probability for denied claims and high charges
+      const adjustedProbability = patientData.status === "Denied" || patientData.charge > 500 
+        ? Math.min(probability + 0.3, 0.95) 
+        : probability;
+      
       return {
-        call_id: `CALL-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-        customer_name: names[Math.floor(Math.random() * names.length)],
+        call_id: `HC-${patientData.patientId}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+        customer_name: patientData.name,
         phone_number: `+1${Math.floor(Math.random() * 9000000000) + 1000000000}`,
         wait_time: Math.floor(Math.random() * 600) + 30,
-        issue_type: issues[Math.floor(Math.random() * issues.length)],
-        probability: probability,
-        predicted_action: probability > 0.7 ? "Priority Routing" : probability > 0.4 ? "Offer Callback" : "Continue Queue",
-        priority: probability > 0.7 ? "High" : probability > 0.4 ? "Medium" : "Low",
+        issue_type: billingIssues[Math.floor(Math.random() * billingIssues.length)],
+        probability: adjustedProbability,
+        predicted_action: adjustedProbability > 0.7 ? "Priority Routing" : adjustedProbability > 0.4 ? "Offer Callback" : "Continue Queue",
+        priority: adjustedProbability > 0.7 ? "High" : adjustedProbability > 0.4 ? "Medium" : "Low",
         status: "Waiting",
         timestamp: new Date().toISOString()
       };
@@ -197,16 +228,18 @@ const Dashboard = () => {
 
     setIsLoading(true);
     
-    // Simulate AI processing delay
+    // Simulate AI processing delay with healthcare billing responses
     setTimeout(() => {
-      const responses = [
-        "This appears to be a billing inquiry. I can help you check your account balance and recent charges. Your current balance is $45.67 with a payment due on March 15th. I've also found a $10 credit from last month that can be applied. Would you like me to process the payment or escalate to billing specialist?",
-        "For delivery tracking, I can see your order #12345 is currently in transit and expected to arrive tomorrow by 3 PM. The package is with FedEx and tracking shows it's 2 stops away. I've sent you a tracking link via SMS. No escalation needed - issue resolved!",
-        "This seems like a technical support issue. I've run a quick diagnostic and detected a connectivity issue with your router model RT-AC66U. I'm sending troubleshooting steps via email, but this requires escalation to Level 2 technical support due to potential hardware failure.",
-        "Account verification completed successfully. I can help you reset your password and update your security settings. For advanced account changes like closing accounts or major profile updates, I'll connect you with a specialist. Standard changes processed automatically."
+      const healthcareBillingResponses = [
+        "I found your claim for patient ID 154669 (Cardiology - Hypertension). Your insurance MMIA shows the claim was submitted on 03/10 for $247. Current status is pending review. The typical processing time is 5-7 business days. I can escalate this to our billing specialist if you'd like expedited review.",
+        "For your EOB inquiry regarding the $1,240 orthopedic charge - I see this was denied by GMOC insurance due to 'prior authorization required'. I can help you resubmit with proper authorization forms. I'm sending the PA-501 form to your email and scheduling a callback with our insurance specialist within 2 hours.",
+        "Your self-pay account shows a balance of $43 for pediatric asthma treatment. I can set up a payment plan with options for $10/month over 4 months or offer a 15% discount for immediate payment. I'm also checking if you qualify for our financial assistance program based on income verification.",
+        "Insurance coverage verification complete for patient #175552. Your neurology epilepsy treatment is covered under IUDTJ plan with a $25 copay. The $186 charge has been approved. I've updated your account and you should receive the corrected statement within 24 hours.",
+        "I see a billing statement error for patient #182683. The cardiology heart failure treatment charge of $231 was incorrectly processed. Your insurance 2R01J should cover this under cardiac care benefits. I'm reprocessing the claim and will have a billing specialist call you within 1 hour to confirm resolution.",
+        "For prescription coverage inquiry - I can verify your current formulary benefits. Most cardiac medications are covered at Tier 2 ($15 copay). I'm checking if your specific prescriptions require step therapy or prior auth. Hold for 30 seconds while I access your pharmacy benefits."
       ];
       
-      const response = responses[Math.floor(Math.random() * responses.length)];
+      const response = healthcareBillingResponses[Math.floor(Math.random() * healthcareBillingResponses.length)];
       setTriageResponse(response);
       setIsLoading(false);
       
@@ -303,18 +336,25 @@ const Dashboard = () => {
   const handleRefreshQueue = () => {
     setIsLoading(true);
     setTimeout(() => {
-      // Simulate adding 2-3 new calls
+      // Simulate adding 2-3 new healthcare billing calls
       const newCalls = Array.from({ length: Math.floor(Math.random() * 3) + 1 }, () => {
-        const issues = ["Billing", "Technical Support", "Account", "Delivery", "Refund", "General Inquiry"];
-        const names = ["Alex Rodriguez", "Maria Garcia", "David Kim", "Lisa Thompson", "James Wilson"];
+        const billingIssues = [
+          "Insurance Claim Denial", 
+          "Bill Payment Query", 
+          "Coverage Verification", 
+          "Prior Authorization", 
+          "Copay Questions",
+          "Billing Statement Error"
+        ];
+        const patientData = healthcareBillingData[Math.floor(Math.random() * healthcareBillingData.length)];
         const probability = Math.random();
         
         return {
-          call_id: `CALL-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-          customer_name: names[Math.floor(Math.random() * names.length)],
+          call_id: `HC-${patientData.patientId}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+          customer_name: patientData.name,
           phone_number: `+1${Math.floor(Math.random() * 9000000000) + 1000000000}`,
           wait_time: Math.floor(Math.random() * 120) + 30,
-          issue_type: issues[Math.floor(Math.random() * issues.length)],
+          issue_type: billingIssues[Math.floor(Math.random() * billingIssues.length)],
           probability: probability,
           predicted_action: probability > 0.7 ? "Priority Routing" : probability > 0.4 ? "Offer Callback" : "Continue Queue",
           priority: (probability > 0.7 ? "High" : probability > 0.4 ? "Medium" : "Low") as "High" | "Medium" | "Low",
@@ -367,18 +407,24 @@ const Dashboard = () => {
 
     setIsLoading(true);
     setTimeout(() => {
-      // Simulate processing a batch file
+      // Simulate processing a healthcare billing batch file
       const batchCalls = Array.from({ length: 8 }, (_, i) => {
-        const issues = ["Billing", "Technical Support", "Account", "Delivery", "Refund"];
-        const names = ["Batch Customer " + (i + 1)];
+        const patientData = healthcareBillingData[i % healthcareBillingData.length];
+        const billingIssues = [
+          "Insurance Claim Denial", 
+          "Bill Payment Query", 
+          "Coverage Verification", 
+          "Prior Authorization", 
+          "Copay Questions"
+        ];
         const probability = Math.random();
         
         return {
-          call_id: `BATCH-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-          customer_name: names[0],
+          call_id: `BATCH-HC-${patientData.patientId}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+          customer_name: patientData.name,
           phone_number: `+1${Math.floor(Math.random() * 9000000000) + 1000000000}`,
           wait_time: Math.floor(Math.random() * 300) + 60,
-          issue_type: issues[Math.floor(Math.random() * issues.length)],
+          issue_type: billingIssues[Math.floor(Math.random() * billingIssues.length)],
           probability: probability,
           predicted_action: probability > 0.7 ? "Priority Routing" : probability > 0.4 ? "Offer Callback" : "Continue Queue",
           priority: (probability > 0.7 ? "High" : probability > 0.4 ? "Medium" : "Low") as "High" | "Medium" | "Low",
@@ -403,27 +449,32 @@ const Dashboard = () => {
     setIsLoading(true);
     setTimeout(() => {
       const sampleCalls = Array.from({ length: 6 }, (_, i) => {
-        const sampleData = [
-          { name: "John Marketing", issue: "Campaign Analytics", phone: "+1-555-0101" },
-          { name: "Sarah Finance", issue: "Budget Approval", phone: "+1-555-0102" },
-          { name: "Mike Operations", issue: "System Integration", phone: "+1-555-0103" },
-          { name: "Emma Support", issue: "Client Escalation", phone: "+1-555-0104" },
-          { name: "Tom Development", issue: "API Documentation", phone: "+1-555-0105" },
-          { name: "Lisa Quality", issue: "Process Review", phone: "+1-555-0106" }
+        const patientData = healthcareBillingData[i % healthcareBillingData.length];
+        const sampleBillingData = [
+          { issue: "Insurance Claim Denial - " + patientData.dept, phone: "+1-555-HC01" },
+          { issue: "Bill Payment Query - $" + patientData.charge, phone: "+1-555-HC02" },
+          { issue: "Coverage Verification - " + patientData.insurance, phone: "+1-555-HC03" },
+          { issue: "Prior Authorization - " + patientData.diagnosis, phone: "+1-555-HC04" },
+          { issue: "Copay Questions - " + patientData.status, phone: "+1-555-HC05" },
+          { issue: "Billing Statement Error - Patient #" + patientData.patientId, phone: "+1-555-HC06" }
         ];
         
-        const data = sampleData[i] || sampleData[0];
+        const data = sampleBillingData[i] || sampleBillingData[0];
         const probability = Math.random();
+        // Higher probability for denied claims
+        const adjustedProbability = patientData.status === "Denied" 
+          ? Math.min(probability + 0.4, 0.9) 
+          : probability;
         
         return {
-          call_id: `SAMPLE-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-          customer_name: data.name,
+          call_id: `SAMPLE-HC-${patientData.patientId}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+          customer_name: patientData.name,
           phone_number: data.phone,
           wait_time: Math.floor(Math.random() * 400) + 100,
           issue_type: data.issue,
-          probability: probability,
-          predicted_action: probability > 0.7 ? "Priority Routing" : probability > 0.4 ? "Offer Callback" : "Continue Queue",
-          priority: (probability > 0.7 ? "High" : probability > 0.4 ? "Medium" : "Low") as "High" | "Medium" | "Low",
+          probability: adjustedProbability,
+          predicted_action: adjustedProbability > 0.7 ? "Priority Routing" : adjustedProbability > 0.4 ? "Offer Callback" : "Continue Queue",
+          priority: (adjustedProbability > 0.7 ? "High" : adjustedProbability > 0.4 ? "Medium" : "Low") as "High" | "Medium" | "Low",
           status: "Waiting" as const,
           timestamp: new Date().toISOString()
         };
