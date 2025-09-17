@@ -7,13 +7,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Phone, 
-  Clock, 
-  TrendingUp, 
-  TrendingDown, 
-  Users, 
-  MessageSquare, 
+import { predictRiskScore } from "@/lib/riskModel";
+import {
+  Phone,
+  Clock,
+  TrendingUp,
+  TrendingDown,
+  Users,
+  MessageSquare,
   Calendar,
   AlertTriangle,
   CheckCircle,
@@ -106,12 +107,13 @@ const Dashboard = () => {
       ];
       
       const patientData = healthcareBillingData[Math.floor(Math.random() * healthcareBillingData.length)];
-      const probability = Math.random();
-      
-      // Higher probability for denied claims and high charges
-      const adjustedProbability = patientData.status === "Denied" || patientData.charge > 500 
-        ? Math.min(probability + 0.3, 0.95) 
-        : probability;
+      // Use ML model to predict risk score
+      const probability = predictRiskScore({
+        wait_time: Math.floor(Math.random() * 600) + 30,
+        issue_type: billingIssues[Math.floor(Math.random() * billingIssues.length)],
+        charge: patientData.charge,
+        status: patientData.status
+      });
       
       return {
         call_id: `HC-${patientData.patientId}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
@@ -119,9 +121,9 @@ const Dashboard = () => {
         phone_number: `+1${Math.floor(Math.random() * 9000000000) + 1000000000}`,
         wait_time: Math.floor(Math.random() * 600) + 30,
         issue_type: billingIssues[Math.floor(Math.random() * billingIssues.length)],
-        probability: adjustedProbability,
-        predicted_action: adjustedProbability > 0.7 ? "Priority Routing" : adjustedProbability > 0.4 ? "Offer Callback" : "Continue Queue",
-        priority: adjustedProbability > 0.7 ? "High" : adjustedProbability > 0.4 ? "Medium" : "Low",
+        probability: probability,
+        predicted_action: probability > 0.7 ? "Priority Routing" : probability > 0.4 ? "Offer Callback" : "Continue Queue",
+        priority: probability > 0.7 ? "High" : probability > 0.4 ? "Medium" : "Low",
         status: "Waiting",
         timestamp: new Date().toISOString()
       };
@@ -137,7 +139,12 @@ const Dashboard = () => {
         const updated = prev.map(call => ({
           ...call,
           wait_time: call.wait_time + 15,
-          probability: Math.min(call.probability + 0.02, 0.95)
+          probability: predictRiskScore({
+            wait_time: call.wait_time + 15,
+            issue_type: call.issue_type,
+            charge: healthcareBillingData.find(p => p.name === call.customer_name)?.charge || 0,
+            status: healthcareBillingData.find(p => p.name === call.customer_name)?.status || "Submitted"
+          })
         }));
 
         // Occasionally add new calls
@@ -188,9 +195,14 @@ const Dashboard = () => {
 
     setIsLoading(true);
     
-    // Simulate API call delay
+    // Use ML model to predict risk score
     setTimeout(() => {
-      const probability = Math.random() * 0.8 + 0.1;
+      const probability = predictRiskScore({
+        wait_time: parseInt(singleCallForm.wait_time) || 0,
+        issue_type: singleCallForm.issue_type,
+        charge: healthcareBillingData.find(p => p.name === singleCallForm.customer_name)?.charge || 0,
+        status: healthcareBillingData.find(p => p.name === singleCallForm.customer_name)?.status || "Submitted"
+      });
       const newCall: CallData = {
         call_id: `CALL-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
         customer_name: singleCallForm.customer_name,
